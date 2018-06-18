@@ -242,7 +242,7 @@ class Data:
         # Seleccionar los datos dentro del rango de fechas
         dataset = pd.DataFrame(pd.date_range(start=fecha_comienzo, end=fecha_fin, freq='D'),columns=['Date'])
         dataset.set_index('Date', inplace=True)
-        dataset = pd.merge(dataset, dm.data,  how='left', left_index=True, right_index=True)
+        dataset = pd.merge(dataset, self.data,  how='left', left_index=True, right_index=True)
         dataset = dataset.interpolate().ffill().fillna(0) #Completar campos faltantes
         
         pos_y = dataset.columns.get_loc(moneda) # Obtener columna correspondiente al stock a predecir
