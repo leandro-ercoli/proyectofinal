@@ -37,6 +37,7 @@ class Data:
         
     def setdata(self,datafile):
         self.data = pd.read_csv(datafile)
+        self.data['Date'] = pd.to_datetime(self.data['Date'])
         self.data.set_index('Date', inplace=True)
         self.fecha_comienzo = self.data.index[0]
         self.fecha_fin = self.data.index[-1]
@@ -213,9 +214,7 @@ class Data:
         plt.figure(figsize=(20,5))
         plt.title("Stock Prices", fontsize=25)
         for stock in np.arange(0, len(self.data.columns), 1):
-            plt.plot(self.data[self.data.columns[stock]], label=self.data.columns[stock])    
-        major_ticks = np.arange(0, len(self.data), 30)
-        plt.xticks(major_ticks, np.array(self.data.index[::30]), rotation=20)
+            plt.plot(self.data[self.data.columns[stock]], label=self.data.columns[stock])  
         plt.legend()
         plt.show()
         
@@ -226,8 +225,6 @@ class Data:
         for stock in np.arange(0, len(self.data.columns), 1):
             plt.subplot(len(self.data.columns), 1, i)
             plt.plot(self.data[self.data.columns[stock]], label=self.data.columns[stock])   
-            major_ticks = np.arange(0, len(self.data), 30)
-            plt.xticks(major_ticks, np.array(self.data.index[::30]), rotation=20)
             plt.legend()
             i+=1
         plt.show()
@@ -240,15 +237,11 @@ class Data:
         :returns: conjuntos X e Y como numpy array
         """
         # Seleccionar los datos dentro del rango de fechas
-        dataset = pd.DataFrame(pd.date_range(start=fecha_comienzo, end=fecha_fin, freq='D'),columns=['Date'])
-        dataset.set_index('Date', inplace=True)
-        dataset = pd.merge(dataset, self.data,  how='left', left_index=True, right_index=True)
+        dataset = self.data[fecha_comienzo:fecha_fin]
         dataset = dataset.interpolate().ffill().fillna(0) #Completar campos faltantes
         
-        pos_y = dataset.columns.get_loc(moneda) # Obtener columna correspondiente al stock a predecir
-        dataset = dataset.values
-        x = np.asarray(dataset)
-        y = np.asarray(dataset[:,pos_y])
+        x = dataset
+        y = dataset[['bitcoin']]
         
         return {'x': x, 'y': y, 'moneda':moneda}
 
@@ -260,8 +253,8 @@ class Predictor:
         
         :param dataset: un conjunto de datos de la clase Data 
         """
-        self.x = np.copy(dataset['x'])
-        self.y = np.copy(dataset['y'])
+        self.x = dataset['x'].copy()
+        self.y = dataset['y'].copy()
         self.moneda = dataset['moneda']
         print("New Predictor")       
           
@@ -269,21 +262,19 @@ class Predictor:
         # Dividir el conjunto de x e y en conjuntos de training y testing
         # La y se corre dia_futuro-1 porque el generator del predictor asigna cada sample de x con un valor de y +1
         # (es decir, que genera un target de un dia a futuro)
-        train_x = self.x[0:len(self.x)-test_size,:]
+        train_x = self.x[0:len(self.x)-test_size]
         train_y = self.y[(dia_futuro-1):len(self.y)-test_size+(dia_futuro-1)]
-        train_y = train_y.reshape(-1,1)
-        test_x  = self.x[len(self.x)-test_size:len(self.x)-(dia_futuro-1),:]
+        test_x  = self.x[len(self.x)-test_size:len(self.x)-(dia_futuro-1)]
         test_y  = self.y[len(self.y)-test_size+(dia_futuro-1):]
-        test_y = test_y.reshape(-1,1)
-        self.real_price = test_y[window_size:]
+        self.__real_testprice = test_y[window_size:]
         
         # Normalización: Escalar los datos entre [0,1]. Hay que escalar con respecto al training set, como si el test set no estuviera.
         self.__scalerX = preprocessing.MinMaxScaler(feature_range = (0,1)).fit(train_x)
         train_x_scaled = self.__scalerX.transform(train_x)
         test_x_scaled = self.__scalerX.transform(test_x)
-        self.__scalerY = preprocessing.MinMaxScaler(feature_range = (0,1)).fit(train_y)
-        train_y_scaled = self.__scalerY.transform(train_y)
-        test_y_scaled = self.__scalerY.transform(test_y)
+        self.__scalerY = preprocessing.MinMaxScaler(feature_range = (0,1)).fit(train_y.values.reshape(-1,1))
+        train_y_scaled = self.__scalerY.transform(train_y.values.reshape(-1,1))
+        test_y_scaled = self.__scalerY.transform(test_y.values.reshape(-1,1))
     
         '''
         TimeseriesGenerator crea una secuencia de samples, cada una de longitud *length*, 
@@ -332,11 +323,9 @@ class Predictor:
         predicted = self.predict()
               
         # Armar dataframes con predicciones e historial de entrenamiento
-        predicciones = pd.DataFrame() # Dataframe de predicciones
         training_history = pd.DataFrame() # Dataframe de entrenamiento
         dataset_name = 'f' + str(dia_futuro) + 'v' + str(window_size) + 'n' + str(neuronas) + 'e' + str(epochs)
-        predicciones = pd.concat([predicciones, pd.DataFrame(data=predicted, columns=[dataset_name])], axis=1)
-        predicciones = pd.concat([predicciones, pd.DataFrame(data=self.real_price, columns=['Y'])], axis=1)
+        self.__real_testprice['prediccion_'+dataset_name] = predicted
         training_history = pd.concat([training_history, pd.DataFrame(data=self.history.history['loss'], columns=[dataset_name +'_loss'])], axis=1)
         training_history = pd.concat([training_history, pd.DataFrame(data=self.history.history['val_loss'], columns=[dataset_name + 'val_loss'])], axis=1)
 
@@ -350,15 +339,15 @@ class Predictor:
             shutil.rmtree(tmp) # Eliminar la carpeta que existía
         os.makedirs(datasetfolder)   
         
-        predicciones.to_csv(datasetfolder + '/predicciones.csv', index=False)
-        predicciones.to_json(datasetfolder + '/predicciones.json',orient="columns")
+        self.__real_testprice.to_csv(datasetfolder + '/predicciones.csv', index=True)
+        self.__real_testprice.to_json(datasetfolder + '/predicciones.json',orient="columns")
         print('Predicciones guardadas en carpeta: ' + datasetfolder)
 
         training_history.to_csv(datasetfolder +  '/train_history.csv', index=False)
         training_history.to_json(datasetfolder + '/train_history.json',orient="columns")
         print('Entrenamiento guardado en carpeta: ' + datasetfolder)
         
-        p = {'predicciones':predicciones, 
+        p = {'predicciones':self.__real_testprice, 
                 'training_history':training_history,
                 'neuronas':neuronas,
                 'epochs':epochs,
@@ -387,8 +376,8 @@ class Predictor:
         plt.show()    
 
         # El precio real es la ultima columna del dataframe
-        val_prediccion = prediccion['predicciones'][prediccion['predicciones'].columns[0]]
-        val_real = prediccion['predicciones']['Y']
+        val_prediccion = prediccion['predicciones'][prediccion['predicciones'].columns[1]]
+        val_real =  prediccion['predicciones'][prediccion['predicciones'].columns[0]]
         rmse = sqrt(mean_squared_error(val_real, val_prediccion))
         print("RMSE: " + str(rmse))
         
