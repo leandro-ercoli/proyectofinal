@@ -258,7 +258,7 @@ class Predictor:
         self.moneda = dataset['moneda']
         print("New Predictor")       
           
-    def __data_preprocessing(self,test_size,window_size=1,dia_futuro=1):
+    def __data_preprocessing(self,test_size,window_size=1,dia_futuro=1, test_skip=0):
         # Dividir el conjunto de x e y en conjuntos de training y testing
         # La y se corre dia_futuro-1 porque el generator del predictor asigna cada sample de x con un valor de y +1
         # (es decir, que genera un target de un dia a futuro)
