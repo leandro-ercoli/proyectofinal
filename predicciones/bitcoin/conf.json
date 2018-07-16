@@ -1,1 +1,1 @@
-{"Moneda": "bitcoin", "variables_crypto": ["bitcoin", "ethereum", "ripple", "dash", "litecoin", "monero", "ethereum-classic", "nem", "augur"], "variables_stocks": ["^IXIC", "^RUT", "^DJI", "^GSPC"], "variables_trends": ["trend_bitcoin"], "N_tests": 3, "test_size": 30, "futuro": [1, 2, 5, 7], "ventana": [1, 2, 5, 7], "neuronas": [2, 4], "epochs": [30]}
+{"Moneda": "bitcoin", "variables_crypto": ["bitcoin"], "variables_stocks": [], "variables_trends": [], "N_tests": 3, "test_size": 30, "futuro": [1], "ventana": [1]}
