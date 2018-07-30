@@ -1,1 +1,1 @@
-{"Moneda": "bitcoin", "variables_crypto": ["bitcoin"], "variables_stocks": [], "variables_trends": [], "N_tests": 3, "test_size": 30, "futuro": [1], "ventana": [1]}
+{"moneda": "bitcoin", "target": "Close bitcoin", "N_tests": 3, "test_size": 30, "futuro": [1], "ventana": [0, 1, 2]}

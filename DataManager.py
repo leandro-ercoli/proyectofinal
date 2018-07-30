@@ -60,13 +60,18 @@ def get_crypto(crypto_names,fecha_comienzo,fecha_fin):
             
             for row in rows:
                 row[0] = pd.to_datetime(row[0]) # Dar formato de fecha 
-                row[1:] = pd.to_numeric(row[1:])
+                row[1:] = pd.to_numeric(row[1:],errors='coerce')
                 
             # Crear data frame con datos
             df = pd.DataFrame(data=rows, columns=headers)
             df = df.iloc[::-1] # Invertir, para que quede del más viejo al más nuevo
-            df.drop(['Open','High','Low','Volume','Market Cap'], axis=1, inplace=True)
-            df.rename(columns={'Close': moneda}, inplace=True)
+            #df.drop(['Open','High','Low','Volume','Market Cap'], axis=1, inplace=True)
+            df.rename(columns={'Open':'Open '+moneda,
+                               'High':'High '+moneda,
+                               'Low':'Low '+moneda,
+                               'Close':'Close ' + moneda,
+                               'Volume':'Volume '+moneda,
+                               'Market Cap':'Market Cap ' + moneda}, inplace=True)
             df.set_index('Date', inplace=True)            
             # Juntar el dataframe actual con el resto para formar un dataframe de marketcaps de todas las monedas
             crypto_dataframe = pd.merge(crypto_dataframe, df,  how='left', left_index=True, right_index=True)
@@ -81,9 +86,9 @@ def get_trends(terminos,fecha_comienzo,fecha_fin):
         
         #for moneda in self.crypto_names:
         for t in terminos:
-            df = pd.read_csv('data/original/trends_' + t + '.csv')
+            df = pd.read_csv('data/original/' + t + '.csv')
           
-            df.rename(columns={df.columns[0]: 'Date',df.columns[1]:'trend_' + t}, inplace=True)
+            df.rename(columns={df.columns[0]: 'Date',df.columns[1]:t}, inplace=True)
             df.set_index('Date', inplace=True)       
         
             trends_dataframe = pd.merge(trends_dataframe, df,  how='left', left_index=True, right_index=True)
