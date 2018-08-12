@@ -1,1 +1,1 @@
-{"moneda": "bitcoin", "target": "Close bitcoin", "N_tests": 3, "test_size": 30, "futuro": [1, 2, 3], "ventana": [0, 1, 2]}
+{"moneda": "bitcoin", "target": "Close bitcoin", "N_tests": 3, "test_size": 30, "futuro": [1], "ventana": [0, 1, 2, 3]}
