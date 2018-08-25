@@ -1,0 +1,13 @@
+Simulacion,Epochs (1),Epochs (2),Epochs (3)
+Neuronas_n1,197,139,300
+Neuronas_n2,66,117,118
+Neuronas_n4,74,85,78
+Neuronas_n8,65,75,71
+Neuronas_n16,57,48,47
+Neuronas_n32,42,39,40
+Neuronas_n64,34,33,30
+Neuronas_n128,30,28,26
+Neuronas_n256,25,24,24
+Neuronas_n512,21,21,21
+Neuronas_n1024,38,26,19
+Neuronas_n2048,23,23,17
