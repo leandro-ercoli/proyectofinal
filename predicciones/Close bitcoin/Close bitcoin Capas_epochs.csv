@@ -1,6 +1,0 @@
-Simulacion,Epochs (1),Epochs (2),Epochs (3)
-Neuronas_n512,21,21,21
-Capas_c1_n512,26,32,25
-Capas_c2_n512,27,32,35
-Capas_c3_n512,30,11,11
-Capas_c4_n512,39,11,12
